@@ -2,6 +2,8 @@
 
 from langchain_google_genai import GoogleGenerativeAI
 from dotenv import load_dotenv
+from utils.recommender import recommend_room
+from db.database import SessionLocal
 import os
 
 load_dotenv()
@@ -13,5 +15,16 @@ llm = GoogleGenerativeAI(
 )
 
 def get_ai_response(message: str) -> str:
-    response = llm.invoke(message)
-    return response.content if hasattr(response, "content") else str(response)
+    db = SessionLocal()
+
+    try:
+        if "recommend" in message.lower():
+            # For now, hardcoded guest name. Later, we can extract dynamically
+            return recommend_room(db, "Namrata")
+
+        # If not recommendation, fallback to Gemini
+        ai_response = llm.invoke(message)
+        return ai_response.content
+
+    finally:
+        db.close()
